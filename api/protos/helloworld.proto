@@ -1,0 +1,16 @@
+// Declare version of Proto
+syntax = "proto3";
+
+// Set Messages
+message HelloRequest {
+    string name = 1;
+}
+
+message HelloResponse {
+    string message = 1;
+}
+
+// Set Service
+service Greeter{
+    rpc SayHello (HelloRequest) returns (HelloResponse) {}
+}

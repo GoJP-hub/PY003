@@ -1,0 +1,3 @@
+// Activate Virtual Env and Deactivate
+venv\Scripts\Activate.ps1
+deactivate

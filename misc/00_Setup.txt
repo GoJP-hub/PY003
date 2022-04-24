@@ -1,1 +1,125 @@
 https://www.toptal.com/developers/gitignore
+https://grpc.io/docs/what-is-grpc/introduction/
+https://knowledge.sakura.ad.jp/24059/
+
+// Learnings
+- proto is the essence for grpc interface creation
+    it defines the messages/data accepted
+    it defines the api mapping IO (messages) in use
+    proto is converted to declared programming language
+- server is the key component that regulates the logics
+    it creates a class with series of methods that handles services & logics can be applied
+    it declares the method that runs the server
+- client is the key component that connects to server and run the request
+    it creates a request to run and queue to the server.
+    it creates the connection to the server and wait for termination
+    contents on this part can be varied
+- as an architecture, I understood as following
+    server should stand on each container where service is being accessed
+    client should stand as caller of api
+- as an theme to consider about, 
+    (1) Load-balancing
+    when creating a server, I specified the workers, which i think is about worker-node.
+    I am also assuming that load-balancing feature based on specified node is default item.
+    Server and Client is having TCP connection.
+
+    AWS ALB cannot be used because it is based on HTTP1 (while gRPC is HTTP2)
+    This difference in type is accepted when it is about simple conversion of contents, but not applicable for load-balancing.
+    There is a chance that grpc-gateway solution solved this item, so let's check it output
+
+    Using K8S is difficult challenge as well.
+    K8S balances the load at L3/4 level, which you can see by usage of pods.
+    However, for gRPC, as TCP stands, it is doing load balance at L7 level.
+    I might be able to solve this issue via changing the setup of K8S as 'header-less something', but feasibility and compliance is yet to be checked.
+    
+
+
+// setup virtual environment (required as python setup different from OS default to be used)
+PowerShell Set-ExecutionPolicy RemoteSigned CurrentUser
+py -m venv venv
+
+// Activate Virtual Env and Deactivate
+venv\Scripts\Activate.ps1
+deactivate
+
+//
+python -m pip install --upgrade pip
+python -m pip install grpcio
+python -m pip install grpcio-tools
+pip install --upgrade google-api-python-client
+
+// Create a folder for proto and python
+PY003/api
+┗protos
+┗python
+
+// Create Proto
+    // Declare version of Proto
+    syntax = "proto3";
+
+    // Set Messages
+    message HelloRequest {
+        string name = 1;
+    }
+
+    message HelloResponse {
+        string message = 1;
+    }
+
+    // Set Service
+    service Greeter{
+        rpc SayHello (HelloRequest) return (HelloResponse) {}
+    }
+
+// Generate Python Codes
+open command prompt at targetted folder (python in this case)
+run the script below
+    python -m grpc_tools.protoc -I../protos --python_out=. --grpc_python_out=. ../protos/helloworld.proto
+
+    // path for -I and file specification must be correct to start
+    // if I want to change up the output location, python_out and grpc_python_out  is the solution
+    python -m grpc_tools.protoc -I../protos --python_out=./helloworld --grpc_python_out=./helloworld ../protos/helloworld.proto
+    
+// Create Server 
+    from concurrent import futures
+    import grpc
+
+
+    import helloworld_pb2_grpc as hi_pb_grpc
+    import helloworld_pb2 as hi_pb
+
+    class Helloworld(hi_pb_grpc.GreeterServicer):
+        def SayHello(self, request, context):
+            return hi_pb.HelloResponse(message='Hi %s!' % request.name)
+
+    def serve():
+        server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+        hi_pb_grpc.add_GreeterServicer_to_server(Helloworld(), server)
+        server.add_insecure_port('[::]:50051')
+        server.start()
+        server.wait_for_termination()
+
+    if __name__ == '__main__':
+        serve()
+
+// Create client
+    from concurrent import futures
+    import grpc
+
+
+    import helloworld_pb2_grpc as hi_pb_grpc
+    import helloworld_pb2 as hi_pb
+
+    class Helloworld(hi_pb_grpc.GreeterServicer):
+        def SayHello(self, request, context):
+            return hi_pb.HelloResponse(message='Hi %s!' % request.name)
+
+    def serve():
+        server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+        hi_pb_grpc.add_GreeterServicer_to_server(Helloworld(), server)
+        server.add_insecure_port('[::]:50051')
+        server.start()
+        server.wait_for_termination()
+
+    if __name__ == '__main__':
+        serve()

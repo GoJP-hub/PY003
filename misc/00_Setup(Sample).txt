@@ -1,0 +1,33 @@
+https://www.toptal.com/developers/gitignore
+
+https://grpc.io/docs/languages/python/quickstart/
+
+// setup virtual environment (required as python setup different from OS default to be used)
+PowerShell Set-ExecutionPolicy RemoteSigned CurrentUser
+py -m venv venv
+
+// Activate Virtual Env and Deactivate
+venv\Scripts\Activate.ps1
+deactivate
+
+//
+python -m pip install --upgrade pip
+python -m pip install grpcio
+python -m pip install grpcio-tools
+
+pip install --upgrade google-api-python-client
+
+// 
+# Clone the repository to get the example code:
+$ git clone -b v1.45.0 --depth 1 --shallow-submodules https://github.com/grpc/grpc
+# Navigate to the "hello, world" Python example:
+$ cd grpc/examples/python/helloworld
+
+//
+python -m grpc_tools.protoc -I../../protos --python_out=. --grpc_python_out=. ../../protos/helloworld.proto
+
+// 
+go to the directory with Scripts
+with two different command prompts, run client and server
+    python greeter_server.py
+    python greeter_client.py
